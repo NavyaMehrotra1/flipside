@@ -1,10 +1,11 @@
 import { useState, useRef } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { Plus, Play, Download, Upload, Search, Bookmark, Grid3X3, List, ArrowLeft, X, Tag } from 'lucide-react'
+import { Plus, Play, Download, Upload, Search, Bookmark, Grid3X3, List, ArrowLeft, X, Tag, Zap } from 'lucide-react'
 import { useDeck } from '../hooks/useDecks'
 import { useCards } from '../hooks/useCards'
 import Modal from '../components/Modal'
 import TipTapEditor from '../components/TipTapEditor'
+import QuickAddPanel from '../components/QuickAddPanel'
 import { SkeletonGrid } from '../components/SkeletonLoader'
 import { exportToNotion, downloadMarkdown } from '../lib/exportNotion'
 import { parseCSV, generateCSVTemplate } from '../lib/csvImport'
@@ -23,6 +24,7 @@ export default function DeckView() {
   const [tagFilter, setTagFilter] = useState('')
   const [showAddModal, setShowAddModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(null)
+  const [quickAddOpen, setQuickAddOpen] = useState(false)
   const [showStudyModal, setShowStudyModal] = useState(false)
   const [showImportModal, setShowImportModal] = useState(false)
 
@@ -143,6 +145,13 @@ export default function DeckView() {
           <Link to={`/deck/${id}/study`} className="btn-secondary text-sm py-2 px-4">
             <Play size={14} /> Study
           </Link>
+          <button
+            onClick={() => setQuickAddOpen(o => !o)}
+            className="btn-secondary text-sm py-2 px-4"
+            style={quickAddOpen ? { borderColor: '#ff9f7a', color: '#ff9f7a' } : {}}
+          >
+            <Zap size={14} /> Quick Add
+          </button>
           <button onClick={() => { setFront(''); setBack(''); setTags(''); setShowAddModal(true) }} className="btn-primary text-sm py-2 px-4">
             <Plus size={14} /> Add card
           </button>
@@ -194,6 +203,25 @@ export default function DeckView() {
           </button>
         </div>
       </div>
+
+      {/* Quick Add Panel */}
+      {quickAddOpen && (
+        <QuickAddPanel
+          onSave={async ({ front, back, tags }) => {
+            const { error } = await createCard({ front, back, tags })
+            if (error) {
+              toast.error('Hmm, something went wrong.')
+            } else {
+              const total = cards.length + 1
+              if (total === 50 || total === 100) {
+                fireConfetti('cardMilestone')
+                toast.success(`${total} cards! Look at you go! 🎉`, { duration: 3000 })
+              }
+            }
+          }}
+          onClose={() => setQuickAddOpen(false)}
+        />
+      )}
 
       {/* Cards */}
       {cardsLoading ? (
