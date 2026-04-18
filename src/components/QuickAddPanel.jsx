@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
-import { Zap, X, CheckCircle2, ImageIcon, Loader2 } from 'lucide-react'
+import { Zap, X, CheckCircle2, ImageIcon, Loader2, Code2 } from 'lucide-react'
 import { uploadCardImage } from '../lib/uploadImage'
 import toast from 'react-hot-toast'
 
@@ -18,8 +18,10 @@ export default function QuickAddPanel({ onSave, onClose }) {
   const [front, setFront] = useState('')
   const [back, setBack] = useState('')
   const [tags, setTags] = useState('')
-  const [frontImage, setFrontImage] = useState(null) // base64 data url
+  const [frontImage, setFrontImage] = useState(null)
   const [backImage, setBackImage] = useState(null)
+  const [frontCode, setFrontCode] = useState(false)
+  const [backCode, setBackCode] = useState(false)
   const [count, setCount] = useState(0)
   const [flash, setFlash] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -29,9 +31,13 @@ export default function QuickAddPanel({ onSave, onClose }) {
 
   useEffect(() => { frontRef.current?.focus() }, [])
 
-  // Build HTML content combining text + optional image
-  const buildHtml = (text, image) => {
-    const textPart = text.trim() ? `<p>${text.trim().replace(/\n/g, '<br>')}</p>` : ''
+  const buildHtml = (text, image, isCode) => {
+    let textPart = ''
+    if (text.trim()) {
+      textPart = isCode
+        ? `<pre><code>${text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</code></pre>`
+        : `<p>${text.trim().replace(/\n/g, '<br>')}</p>`
+    }
     const imgPart = image ? `<img src="${image}" alt="" />` : ''
     return textPart + imgPart
   }
@@ -43,14 +49,15 @@ export default function QuickAddPanel({ onSave, onClose }) {
     setSaving(true)
     const tagArr = tags ? tags.split(',').map(t => t.trim()).filter(Boolean) : []
     await onSave({
-      front: buildHtml(front, frontImage),
-      back: buildHtml(back, backImage),
+      front: buildHtml(front, frontImage, frontCode),
+      back: buildHtml(back, backImage, backCode),
       tags: tagArr,
     })
     setSaving(false)
     setCount(c => c + 1)
     setFront(''); setBack('')
     setFrontImage(null); setBackImage(null)
+    setFrontCode(false); setBackCode(false)
     setFlash(true)
     setTimeout(() => setFlash(false), 600)
     frontRef.current?.focus()
@@ -171,19 +178,24 @@ export default function QuickAddPanel({ onSave, onClose }) {
         {/* Front */}
         <div
           className="p-4"
-          style={focused === 'front' ? { background: 'rgba(255,184,153,0.04)' } : {}}
+          style={focused === 'front'
+            ? { background: frontCode ? 'rgba(28,25,23,0.03)' : 'rgba(255,184,153,0.04)' }
+            : {}}
         >
           <div className="flex items-center justify-between mb-2">
             <label className="text-xs font-bold uppercase tracking-wider opacity-40">
               Front — Question
             </label>
-            <ImageAttachBtn
-              side="front"
-              image={frontImage}
+            <div className="flex items-center gap-2">
+              <CodeToggle active={frontCode} onToggle={() => setFrontCode(v => !v)} />
+              <ImageAttachBtn
+                side="front"
+                image={frontImage}
               uploading={uploadingFor === 'front'}
               onAttach={(file) => attachImage(file, 'front')}
               onClear={() => setFrontImage(null)}
             />
+            </div>
           </div>
           <textarea
             ref={frontRef}
@@ -191,10 +203,18 @@ export default function QuickAddPanel({ onSave, onClose }) {
             onChange={e => { setFront(e.target.value); autoResize(e.target) }}
             onKeyDown={handleFrontKey}
             onFocus={() => setFocused('front')}
-            placeholder="What do you want to remember?"
+            placeholder={frontCode ? '// write your code here' : 'What do you want to remember?'}
             rows={3}
-            className="w-full resize-none outline-none text-base leading-relaxed"
-            style={{ fontFamily: 'var(--font-card)', background: 'transparent', color: 'var(--color-text)', minHeight: '72px' }}
+            className="w-full resize-none outline-none leading-relaxed"
+            style={{
+              fontFamily: frontCode ? "'Fira Code', 'Courier New', monospace" : 'var(--font-card)',
+              fontSize: frontCode ? '0.85rem' : '1rem',
+              background: frontCode ? 'rgba(28,25,23,0.04)' : 'transparent',
+              color: 'var(--color-text)',
+              minHeight: '72px',
+              borderRadius: frontCode ? '8px' : 0,
+              padding: frontCode ? '0.5rem' : 0,
+            }}
           />
           {frontImage && (
             <ImagePreview src={frontImage} onClear={() => setFrontImage(null)} />
@@ -204,19 +224,24 @@ export default function QuickAddPanel({ onSave, onClose }) {
         {/* Back */}
         <div
           className="p-4"
-          style={focused === 'back' ? { background: 'rgba(196,181,253,0.04)' } : {}}
+          style={focused === 'back'
+            ? { background: backCode ? 'rgba(28,25,23,0.03)' : 'rgba(196,181,253,0.04)' }
+            : {}}
         >
           <div className="flex items-center justify-between mb-2">
             <label className="text-xs font-bold uppercase tracking-wider opacity-40">
               Back — Answer
             </label>
-            <ImageAttachBtn
-              side="back"
-              image={backImage}
-              uploading={uploadingFor === 'back'}
-              onAttach={(file) => attachImage(file, 'back')}
-              onClear={() => setBackImage(null)}
-            />
+            <div className="flex items-center gap-2">
+              <CodeToggle active={backCode} onToggle={() => setBackCode(v => !v)} />
+              <ImageAttachBtn
+                side="back"
+                image={backImage}
+                uploading={uploadingFor === 'back'}
+                onAttach={(file) => attachImage(file, 'back')}
+                onClear={() => setBackImage(null)}
+              />
+            </div>
           </div>
           <textarea
             ref={backRef}
@@ -224,10 +249,18 @@ export default function QuickAddPanel({ onSave, onClose }) {
             onChange={e => { setBack(e.target.value); autoResize(e.target) }}
             onKeyDown={handleBackKey}
             onFocus={() => setFocused('back')}
-            placeholder="The answer... (Enter to save)"
+            placeholder={backCode ? '// write your code here' : 'The answer... (Enter to save)'}
             rows={3}
-            className="w-full resize-none outline-none text-base leading-relaxed"
-            style={{ fontFamily: 'var(--font-card)', background: 'transparent', color: 'var(--color-text)', minHeight: '72px' }}
+            className="w-full resize-none outline-none leading-relaxed"
+            style={{
+              fontFamily: backCode ? "'Fira Code', 'Courier New', monospace" : 'var(--font-card)',
+              fontSize: backCode ? '0.85rem' : '1rem',
+              background: backCode ? 'rgba(28,25,23,0.04)' : 'transparent',
+              color: 'var(--color-text)',
+              minHeight: '72px',
+              borderRadius: backCode ? '8px' : 0,
+              padding: backCode ? '0.5rem' : 0,
+            }}
           />
           {backImage && (
             <ImagePreview src={backImage} onClear={() => setBackImage(null)} />
@@ -261,6 +294,26 @@ export default function QuickAddPanel({ onSave, onClose }) {
         </button>
       </div>
     </div>
+  )
+}
+
+function CodeToggle({ active, onToggle }) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      title={active ? 'Switch to text' : 'Switch to code mode'}
+      className="flex items-center gap-1 text-xs transition-opacity"
+      style={{
+        opacity: active ? 1 : 0.4,
+        color: active ? '#a78bfa' : 'inherit',
+        fontFamily: 'monospace',
+        fontWeight: 700,
+      }}
+    >
+      <Code2 size={12} />
+      <span>code</span>
+    </button>
   )
 }
 
