@@ -1,7 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useStreak } from '../hooks/useStreak'
-import { Moon, Sun, Settings, LogOut, BookOpen } from 'lucide-react'
+import { Moon, Sun, Settings, LogOut, Lock } from 'lucide-react'
 import { useState, useEffect } from 'react'
 
 export default function Navbar() {
@@ -91,6 +91,14 @@ export default function Navbar() {
                       onClick={() => setMenuOpen(false)}
                     >
                       <Settings size={14} /> Settings
+                    </Link>
+                    <Link
+                      to="/settings#password"
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-black/5 no-underline"
+                      style={{ color: 'var(--color-text)' }}
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      <Lock size={14} /> Change password
                     </Link>
                     <button
                       onClick={handleSignOut}

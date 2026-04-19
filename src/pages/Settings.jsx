@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { User, Mail, Lock, Trash2, ArrowLeft } from 'lucide-react'
@@ -8,6 +8,15 @@ import { supabase } from '../lib/supabase'
 export default function Settings() {
   const { user, displayName, updateProfile, signOut } = useAuth()
   const navigate = useNavigate()
+
+  const passwordRef = useRef(null)
+
+  // Scroll to password section if navigated with #password hash
+  useEffect(() => {
+    if (window.location.hash === '#password') {
+      setTimeout(() => passwordRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100)
+    }
+  }, [])
 
   const [name, setName] = useState(displayName)
   const [password, setPassword] = useState('')
@@ -87,7 +96,7 @@ export default function Settings() {
       </section>
 
       {/* Password */}
-      <section className="card-base p-6 mb-4" style={{ background: 'var(--color-surface)' }}>
+      <section ref={passwordRef} className="card-base p-6 mb-4" style={{ background: 'var(--color-surface)' }}>
         <h2 className="font-bold text-lg mb-4 flex items-center gap-2"><Lock size={16} /> Change Password</h2>
         <form onSubmit={handleUpdatePassword} className="space-y-4">
           <div>

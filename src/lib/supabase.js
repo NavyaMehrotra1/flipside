@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { dualStorage } from './storage'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
@@ -14,6 +15,7 @@ export const supabase = createClient(
     auth: {
       persistSession: true,
       autoRefreshToken: true,
+      storage: dualStorage,
     },
   }
 )
