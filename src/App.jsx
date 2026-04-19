@@ -9,6 +9,7 @@ import DeckView from './pages/DeckView'
 import StudySession from './pages/StudySession'
 import NewDeck from './pages/NewDeck'
 import Settings from './pages/Settings'
+import ResetPassword from './pages/ResetPassword'
 import './styles/globals.css'
 
 function ProtectedLayout() {
@@ -49,6 +50,7 @@ export default function App() {
           <Route element={<PublicRoute />}>
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
           </Route>
           <Route element={<ProtectedLayout />}>
             <Route path="/" element={<Dashboard />} />
