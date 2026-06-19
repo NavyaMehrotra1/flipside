@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Plus, Flame, BookOpen } from 'lucide-react'
+import { Plus, BookOpen } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useDecks } from '../hooks/useDecks'
 import { useStreak } from '../hooks/useStreak'
 import DeckGrid from '../components/DeckGrid'
 import { SkeletonGrid } from '../components/SkeletonLoader'
 import Modal from '../components/Modal'
+import SocialView from '../components/SocialView'
 import toast from 'react-hot-toast'
 import ConfettiTrigger, { fireConfetti } from '../components/ConfettiTrigger'
 import { getMilestoneMessage, isMilestone } from '../lib/streaks'
@@ -22,15 +23,15 @@ const HEADERS = [
 
 export default function Dashboard() {
   const { firstName } = useAuth()
-  const { decks, loading, createDeck, deleteDeck, updateDeck } = useDecks()
+  const { decks, loading, deleteDeck, updateDeck } = useDecks()
   const { streak, streakBroken } = useStreak()
   const [header] = useState(() => HEADERS[Math.floor(Math.random() * HEADERS.length)])
+  const [mode, setMode] = useState('focus')
   const [deleteModal, setDeleteModal] = useState(null)
   const [editModal, setEditModal] = useState(null)
   const [editName, setEditName] = useState('')
   const [editDesc, setEditDesc] = useState('')
 
-  // Check streak milestones
   useEffect(() => {
     if (streak?.current_streak && isMilestone(streak.current_streak)) {
       fireConfetti('milestone')
@@ -41,7 +42,7 @@ export default function Dashboard() {
     if (!deleteModal) return
     const { error } = await deleteDeck(deleteModal.id)
     if (error) {
-      toast.error('Hmm, something went wrong. Let\'s try that again.')
+      toast.error("Hmm, something went wrong. Let's try that again.")
     } else {
       toast.success('Deck deleted.')
     }
@@ -64,20 +65,43 @@ export default function Dashboard() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
+      <ConfettiTrigger />
+
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-start justify-between flex-wrap gap-4">
           <div>
             <p className="text-sm font-semibold opacity-50 mb-1">{header}</p>
-            <h1 className="text-3xl font-extrabold">
-              Welcome back, {firstName}! 👋
-            </h1>
+            <h1 className="text-3xl font-extrabold">Welcome back, {firstName}! 👋</h1>
           </div>
 
-          <Link to="/new-deck" className="btn-primary">
-            <Plus size={16} />
-            New Deck
-          </Link>
+          <div className="flex items-center gap-3">
+            {/* Mode toggle */}
+            <div className="flex p-1 gap-1 rounded-2xl" style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
+              {[
+                { id: 'focus',  label: '📚 Focus' },
+                { id: 'social', label: '👥 Social' },
+              ].map(({ id, label }) => (
+                <button
+                  key={id}
+                  onClick={() => setMode(id)}
+                  className="px-4 py-2 rounded-xl text-sm font-bold transition-all"
+                  style={mode === id
+                    ? { background: 'linear-gradient(135deg, #ff9f7a, #ffb89a)', color: 'white', boxShadow: '0 2px 8px rgba(255,159,122,0.3)' }
+                    : { opacity: 0.45 }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {mode === 'focus' && (
+              <Link to="/new-deck" className="btn-primary">
+                <Plus size={16} />
+                New Deck
+              </Link>
+            )}
+          </div>
         </div>
 
         {/* Streak banner */}
@@ -105,47 +129,51 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* Decks section */}
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="font-bold text-lg flex items-center gap-2">
-          <BookOpen size={18} /> Your Decks
-          <span className="text-sm font-normal opacity-40 ml-1">({decks.length})</span>
-        </h2>
-      </div>
+      {/* ── Focus mode ────────────────────────────────────── */}
+      {mode === 'focus' && (
+        <>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="font-bold text-lg flex items-center gap-2">
+              <BookOpen size={18} /> Your Decks
+              <span className="text-sm font-normal opacity-40 ml-1">({decks.length})</span>
+            </h2>
+          </div>
 
-      {loading ? (
-        <SkeletonGrid count={6} />
-      ) : decks.length === 0 ? (
-        <div
-          className="card-base flex flex-col items-center justify-center py-16 text-center"
-          style={{ background: 'var(--color-surface)' }}
-        >
-          <div className="text-5xl mb-4">📭</div>
-          <h3 className="font-bold text-xl mb-2">No cards yet — let's fix that! ✨</h3>
-          <p className="opacity-60 mb-6 text-sm">Create your first deck and start learning something new today.</p>
-          <Link to="/new-deck" className="btn-primary">
-            <Plus size={16} />
-            Create your first deck
-          </Link>
-        </div>
-      ) : (
-        <DeckGrid
-          decks={decks}
-          onDelete={setDeleteModal}
-          onEdit={(deck) => {
-            setEditModal(deck)
-            setEditName(deck.name)
-            setEditDesc(deck.description || '')
-          }}
-        />
+          {loading ? (
+            <SkeletonGrid count={6} />
+          ) : decks.length === 0 ? (
+            <div className="card-base flex flex-col items-center justify-center py-16 text-center"
+              style={{ background: 'var(--color-surface)' }}>
+              <div className="text-5xl mb-4">📭</div>
+              <h3 className="font-bold text-xl mb-2">No cards yet — let's fix that! ✨</h3>
+              <p className="opacity-60 mb-6 text-sm">Create your first deck and start learning something new today.</p>
+              <Link to="/new-deck" className="btn-primary">
+                <Plus size={16} />
+                Create your first deck
+              </Link>
+            </div>
+          ) : (
+            <DeckGrid
+              decks={decks}
+              onDelete={setDeleteModal}
+              onEdit={(deck) => {
+                setEditModal(deck)
+                setEditName(deck.name)
+                setEditDesc(deck.description || '')
+              }}
+            />
+          )}
+        </>
       )}
+
+      {/* ── Social mode ───────────────────────────────────── */}
+      {mode === 'social' && <SocialView />}
 
       {/* Delete modal */}
       <Modal open={!!deleteModal} onClose={() => setDeleteModal(null)} title="Delete deck?" size="sm">
         <div className="p-5">
           <p className="opacity-70 text-sm mb-4">
-            This will permanently delete <strong>"{deleteModal?.name}"</strong> and all its cards.
-            This cannot be undone.
+            This will permanently delete <strong>"{deleteModal?.name}"</strong> and all its cards. This cannot be undone.
           </p>
           <div className="flex gap-2">
             <button onClick={() => setDeleteModal(null)} className="btn-secondary flex-1 justify-center">Cancel</button>
@@ -161,23 +189,11 @@ export default function Dashboard() {
         <form onSubmit={handleEdit} className="p-5 space-y-4">
           <div>
             <label className="block text-sm font-semibold mb-1.5">Deck name</label>
-            <input
-              type="text"
-              value={editName}
-              onChange={e => setEditName(e.target.value)}
-              required
-              className="input-base"
-            />
+            <input type="text" value={editName} onChange={e => setEditName(e.target.value)} required className="input-base" />
           </div>
           <div>
             <label className="block text-sm font-semibold mb-1.5">Description</label>
-            <input
-              type="text"
-              value={editDesc}
-              onChange={e => setEditDesc(e.target.value)}
-              placeholder="What's this deck about?"
-              className="input-base"
-            />
+            <input type="text" value={editDesc} onChange={e => setEditDesc(e.target.value)} placeholder="What's this deck about?" className="input-base" />
           </div>
           <div className="flex gap-2">
             <button type="button" onClick={() => setEditModal(null)} className="btn-secondary flex-1 justify-center">Cancel</button>

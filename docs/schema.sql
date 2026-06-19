@@ -128,3 +128,79 @@ create policy "push_subscriptions: own rows only"
   on push_subscriptions for all
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
+
+
+-- ── 4. SOCIAL TABLES ────────────────────────────────────────
+
+-- Public profile info used by the leaderboard
+create table if not exists profiles (
+  id              uuid primary key references auth.users(id) on delete cascade,
+  display_name    text,
+  current_streak  integer default 0,
+  last_study_date date,
+  updated_at      timestamptz default now()
+);
+
+-- Study groups
+create table if not exists groups (
+  id         uuid primary key default gen_random_uuid(),
+  name       text not null,
+  code       char(6) unique not null,
+  created_by uuid references auth.users(id) on delete set null,
+  created_at timestamptz default now()
+);
+
+-- Group membership
+create table if not exists group_members (
+  group_id  uuid references groups(id) on delete cascade,
+  user_id   uuid references auth.users(id) on delete cascade,
+  joined_at timestamptz default now(),
+  primary key (group_id, user_id)
+);
+
+-- RLS for social tables
+alter table profiles      enable row level security;
+alter table groups        enable row level security;
+alter table group_members enable row level security;
+
+-- Profiles: any signed-in user can read (for leaderboard); only you write yours
+create policy "profiles: authenticated can read"
+  on profiles for select
+  to authenticated
+  using (true);
+
+create policy "profiles: own row only write"
+  on profiles for insert
+  with check (auth.uid() = id);
+
+create policy "profiles: own row only update"
+  on profiles for update
+  using (auth.uid() = id);
+
+-- Groups: any signed-in user can read (needed to look up by code)
+create policy "groups: authenticated can read"
+  on groups for select
+  to authenticated
+  using (true);
+
+create policy "groups: creator can insert"
+  on groups for insert
+  with check (auth.uid() = created_by);
+
+create policy "groups: creator can delete"
+  on groups for delete
+  using (auth.uid() = created_by);
+
+-- Group members: any authenticated user can read (for leaderboard lookup)
+create policy "group_members: authenticated can read"
+  on group_members for select
+  to authenticated
+  using (true);
+
+create policy "group_members: can join"
+  on group_members for insert
+  with check (auth.uid() = user_id);
+
+create policy "group_members: can leave"
+  on group_members for delete
+  using (auth.uid() = user_id);

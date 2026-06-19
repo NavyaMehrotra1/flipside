@@ -12,27 +12,37 @@ import Settings from './pages/Settings'
 import ResetPassword from './pages/ResetPassword'
 import PrivacyPolicy from './pages/PrivacyPolicy'
 import TermsOfService from './pages/TermsOfService'
+import LandingPage from './pages/LandingPage'
 import './styles/globals.css'
 
-function ProtectedLayout() {
+function RootRoute() {
   const { user, loading } = useAuth()
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-4xl" style={{ animation: 'spin 1s linear infinite' }}>🃏</div>
-      </div>
-    )
-  }
-
-  if (!user) return <Navigate to="/login" replace />
-
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="text-4xl" style={{ animation: 'spin 1s linear infinite' }}>🃏</div>
+    </div>
+  )
+  if (!user) return <LandingPage />
   return (
     <>
       <Navbar />
-      <main className="min-h-screen">
-        <Outlet />
-      </main>
+      <main className="min-h-screen"><Dashboard /></main>
+    </>
+  )
+}
+
+function ProtectedLayout() {
+  const { user, loading } = useAuth()
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="text-4xl" style={{ animation: 'spin 1s linear infinite' }}>🃏</div>
+    </div>
+  )
+  if (!user) return <Navigate to="/login" replace />
+  return (
+    <>
+      <Navbar />
+      <main className="min-h-screen"><Outlet /></main>
     </>
   )
 }
@@ -49,6 +59,7 @@ export default function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
+          <Route path="/" element={<RootRoute />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsOfService />} />
           <Route element={<PublicRoute />}>
@@ -57,7 +68,6 @@ export default function App() {
             <Route path="/reset-password" element={<ResetPassword />} />
           </Route>
           <Route element={<ProtectedLayout />}>
-            <Route path="/" element={<Dashboard />} />
             <Route path="/new-deck" element={<NewDeck />} />
             <Route path="/deck/:id" element={<DeckView />} />
             <Route path="/deck/:id/study" element={<StudySession />} />
@@ -78,12 +88,8 @@ export default function App() {
             border: '1px solid var(--color-border)',
             boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
           },
-          success: {
-            iconTheme: { primary: '#86efac', secondary: 'white' },
-          },
-          error: {
-            iconTheme: { primary: '#fca5a5', secondary: 'white' },
-          },
+          success: { iconTheme: { primary: '#86efac', secondary: 'white' } },
+          error:   { iconTheme: { primary: '#fca5a5', secondary: 'white' } },
         }}
       />
     </AuthProvider>
