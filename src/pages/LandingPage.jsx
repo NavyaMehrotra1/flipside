@@ -67,16 +67,6 @@ function ForgettingCurve() {
   )
 }
 
-const COMPARISON = [
-  ['SM-2 spaced repetition algorithm',  true,  true],
-  ['Works in any browser, no install',   false, true],
-  ['Modern, beautiful UI',               false, true],
-  ['Study groups & leaderboards',        false, true],
-  ['AI card generation from notes',      false, true],
-  ['Free on all devices',                false, true],
-  ['Daily streaks + milestone rewards',  false, true],
-  ['Time to first card',                 '~30 min setup', '30 seconds'],
-]
 
 const STATS = [
   {
@@ -115,7 +105,6 @@ export default function LandingPage() {
         </div>
         <div className="hidden md:flex items-center gap-6 text-sm font-semibold opacity-60">
           <button onClick={() => scienceRef.current?.scrollIntoView({ behavior: 'smooth' })} className="hover:opacity-100 transition-opacity">The Science</button>
-          <Link to="/signup" className="hover:opacity-100 transition-opacity">vs Anki</Link>
         </div>
         <div className="flex items-center gap-3">
           <Link to="/login" className="text-sm font-semibold opacity-60 hover:opacity-100 transition-opacity">Sign in</Link>
@@ -247,43 +236,6 @@ export default function LandingPage() {
               ))}
             </ul>
           </div>
-        </div>
-      </section>
-
-      {/* ── vs Anki ───────────────────────────────────────── */}
-      <section className="max-w-3xl mx-auto px-6 py-20">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-extrabold mb-4">Everything Anki gets right.<br />Plus everything it misses.</h2>
-          <p className="opacity-60">Anki's algorithm is brilliant. The rest of it is a 2003 desktop app.</p>
-        </div>
-
-        <div className="rounded-3xl overflow-hidden" style={{ border: '1px solid var(--color-border)' }}>
-          <div className="grid grid-cols-3 px-6 py-3 text-xs font-bold uppercase tracking-widest opacity-40"
-            style={{ background: 'var(--color-surface)', borderBottom: '1px solid var(--color-border)' }}>
-            <span>Feature</span>
-            <span className="text-center">Anki</span>
-            <span className="text-center">Flipside</span>
-          </div>
-          {COMPARISON.map(([feature, anki, flip], i) => (
-            <div key={feature}
-              className="grid grid-cols-3 px-6 py-4 text-sm items-center"
-              style={{
-                background: i % 2 === 0 ? 'var(--color-surface)' : 'var(--color-surface-warm)',
-                borderBottom: i < COMPARISON.length - 1 ? '1px solid var(--color-border)' : 'none',
-              }}>
-              <span className="font-semibold opacity-80">{feature}</span>
-              <span className="text-center">
-                {typeof anki === 'string' ? <span className="opacity-50 text-xs">{anki}</span>
-                  : anki ? <span className="text-green-500 font-bold text-base">✓</span>
-                  : <span className="text-red-400 font-bold text-base">✗</span>}
-              </span>
-              <span className="text-center">
-                {typeof flip === 'string' ? <span className="text-green-600 text-xs font-semibold">{flip}</span>
-                  : flip ? <span className="text-green-500 font-bold text-base">✓</span>
-                  : <span className="text-red-400 font-bold text-base">✗</span>}
-              </span>
-            </div>
-          ))}
         </div>
       </section>
 
