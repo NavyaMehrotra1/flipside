@@ -61,6 +61,15 @@ create table if not exists streaks (
   last_study_date date
 );
 
+create table if not exists push_subscriptions (
+  id         uuid primary key default gen_random_uuid(),
+  user_id    uuid references auth.users(id) on delete cascade unique,
+  endpoint   text not null,
+  p256dh     text not null,
+  auth       text not null,
+  updated_at timestamptz default now()
+);
+
 
 -- ── 2. STORAGE BUCKET (for card images) ────────────────────
 -- Run this separately in SQL Editor if the bucket doesn't exist yet:
@@ -110,5 +119,12 @@ create policy "sessions: own rows only"
 
 create policy "streaks: own rows only"
   on streaks for all
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+alter table push_subscriptions enable row level security;
+
+create policy "push_subscriptions: own rows only"
+  on push_subscriptions for all
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);

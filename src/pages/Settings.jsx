@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { User, Mail, Lock, Trash2, ArrowLeft } from 'lucide-react'
+import { User, Lock, Trash2, ArrowLeft } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { supabase } from '../lib/supabase'
 
@@ -62,9 +62,17 @@ export default function Settings() {
       toast.error('Please type DELETE to confirm.')
       return
     }
-    // Note: deleting a user requires admin privileges; this signs them out instead
+    const { data: { session } } = await supabase.auth.getSession()
+    const res = await fetch('/api/delete-account', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${session?.access_token}` },
+    })
+    if (!res.ok) {
+      toast.error('Something went wrong. Please try again.')
+      return
+    }
     await signOut()
-    toast.success('Account deletion requested. Contact support to complete.')
+    toast.success('Your account has been permanently deleted.')
     navigate('/login')
   }
 
@@ -109,23 +117,6 @@ export default function Settings() {
           </div>
           <button type="submit" disabled={saving} className="btn-primary text-sm">Update password</button>
         </form>
-      </section>
-
-      {/* Connected accounts */}
-      <section className="card-base p-6 mb-4" style={{ background: 'var(--color-surface)' }}>
-        <h2 className="font-bold text-lg mb-4">Connected Accounts</h2>
-        <div className="space-y-2">
-          {(user?.app_metadata?.providers || [user?.app_metadata?.provider]).filter(Boolean).map(provider => (
-            <div key={provider} className="flex items-center gap-2 text-sm">
-              <div className="w-2 h-2 rounded-full bg-green-400" />
-              <span className="capitalize font-semibold">{provider}</span>
-              <span className="opacity-50">connected</span>
-            </div>
-          ))}
-          {!user?.app_metadata?.providers && !user?.app_metadata?.provider && (
-            <p className="text-sm opacity-50">No OAuth providers connected.</p>
-          )}
-        </div>
       </section>
 
       {/* Danger zone */}

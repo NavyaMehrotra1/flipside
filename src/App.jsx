@@ -10,6 +10,8 @@ import StudySession from './pages/StudySession'
 import NewDeck from './pages/NewDeck'
 import Settings from './pages/Settings'
 import ResetPassword from './pages/ResetPassword'
+import PrivacyPolicy from './pages/PrivacyPolicy'
+import TermsOfService from './pages/TermsOfService'
 import './styles/globals.css'
 
 function ProtectedLayout() {
@@ -47,6 +49,8 @@ export default function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/terms" element={<TermsOfService />} />
           <Route element={<PublicRoute />}>
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />

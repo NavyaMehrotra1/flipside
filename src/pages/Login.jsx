@@ -5,22 +5,13 @@ import { Mail, Lock } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { supabase } from '../lib/supabase'
 
-function GitHubIcon({ size = 16 }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
-    </svg>
-  )
-}
-
 export default function Login() {
-  const { signIn, signInWithGoogle, signInWithGitHub } = useAuth()
+  const { signIn } = useAuth()
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
 
-  // Forgot password state
   const [forgotMode, setForgotMode] = useState(false)
   const [resetEmail, setResetEmail] = useState('')
   const [resetSent, setResetSent] = useState(false)
@@ -85,7 +76,6 @@ export default function Login() {
       <div className="flex-1 flex items-center justify-center p-6">
         <div className="w-full max-w-sm">
 
-          {/* ── Forgot password flow ── */}
           {forgotMode ? (
             <>
               <div className="mb-8 text-center">
@@ -138,7 +128,6 @@ export default function Login() {
               )}
             </>
           ) : (
-            /* ── Normal sign in flow ── */
             <>
               <div className="mb-8 text-center">
                 <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-4 lg:hidden"
@@ -147,23 +136,6 @@ export default function Login() {
                 </div>
                 <h1 className="text-2xl font-extrabold mb-1">Welcome back! 👋</h1>
                 <p className="opacity-60 text-sm">Ready to flip some cards?</p>
-              </div>
-
-              <div className="space-y-3 mb-6">
-                <button onClick={signInWithGoogle} className="btn-secondary w-full justify-center">
-                  <img src="https://www.google.com/favicon.ico" alt="" className="w-4 h-4" />
-                  Continue with Google
-                </button>
-                <button onClick={signInWithGitHub} className="btn-secondary w-full justify-center">
-                  <GitHubIcon size={16} />
-                  Continue with GitHub
-                </button>
-              </div>
-
-              <div className="flex items-center gap-3 mb-6">
-                <div className="flex-1 h-px" style={{ background: 'var(--color-border)' }} />
-                <span className="text-xs opacity-40 font-semibold">or email</span>
-                <div className="flex-1 h-px" style={{ background: 'var(--color-border)' }} />
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">
