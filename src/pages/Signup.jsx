@@ -122,11 +122,21 @@ export default function Signup() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [ageConfirmed, setAgeConfirmed] = useState(false)
+  const [agreedToTerms, setAgreedToTerms] = useState(false)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (password.length < 6) {
       toast.error('Password must be at least 6 characters.')
+      return
+    }
+    if (!ageConfirmed) {
+      toast.error('You must confirm you are at least 13 years old to sign up.')
+      return
+    }
+    if (!agreedToTerms) {
+      toast.error('You must agree to the Terms of Service and Privacy Policy.')
       return
     }
     setLoading(true)
@@ -169,7 +179,7 @@ export default function Signup() {
           {[
             ['🧠', 'Spaced repetition built in — cards resurface right when you need them'],
             ['🔥', 'Daily streaks keep you consistent without the guilt'],
-            ['✨', 'AI generates cards from any notes, textbook, or paste'],
+            ['👥', 'Study groups keep you accountable with a live leaderboard'],
           ].map(([icon, text]) => (
             <div key={text} className="flex items-start gap-3">
               <span className="text-lg mt-0.5">{icon}</span>
@@ -218,17 +228,38 @@ export default function Signup() {
                 <input type="password" value={password} onChange={e => setPassword(e.target.value)} required placeholder="Min 6 characters" className="input-base pl-9" />
               </div>
             </div>
+            <div className="space-y-2.5 pt-1">
+              <label className="flex items-start gap-2.5 text-xs opacity-70 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={ageConfirmed}
+                  onChange={e => setAgeConfirmed(e.target.checked)}
+                  className="mt-0.5"
+                  required
+                />
+                <span>I confirm that I am at least 13 years old.</span>
+              </label>
+              <label className="flex items-start gap-2.5 text-xs opacity-70 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={agreedToTerms}
+                  onChange={e => setAgreedToTerms(e.target.checked)}
+                  className="mt-0.5"
+                  required
+                />
+                <span>
+                  I agree to the{' '}
+                  <Link to="/terms" className="underline hover:opacity-100">Terms of Service</Link>
+                  {' '}and{' '}
+                  <Link to="/privacy" className="underline hover:opacity-100">Privacy Policy</Link>.
+                </span>
+              </label>
+            </div>
+
             <button type="submit" disabled={loading} className="btn-primary w-full justify-center">
               {loading ? 'Creating account...' : 'Create account ✨'}
             </button>
           </form>
-
-          <p className="text-center text-xs mt-4 opacity-40 leading-relaxed">
-            By creating an account you agree to our{' '}
-            <Link to="/terms" className="underline hover:opacity-70">Terms of Service</Link>
-            {' '}and{' '}
-            <Link to="/privacy" className="underline hover:opacity-70">Privacy Policy</Link>.
-          </p>
 
           <p className="text-center text-sm mt-5 opacity-60">
             Already have an account?{' '}

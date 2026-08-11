@@ -22,7 +22,7 @@ export function notificationPermission() {
   return Notification.permission // 'default' | 'granted' | 'denied'
 }
 
-export async function enableNotifications(userId) {
+export async function enableNotifications(accessToken) {
   if (!notificationsSupported()) return { ok: false, reason: 'unsupported' }
 
   const permission = await Notification.requestPermission()
@@ -39,8 +39,8 @@ export async function enableNotifications(userId) {
 
   const res = await fetch('/api/save-subscription', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ userId, subscription: sub.toJSON() }),
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify({ subscription: sub.toJSON() }),
   })
 
   return res.ok ? { ok: true } : { ok: false, reason: 'save_failed' }

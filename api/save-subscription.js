@@ -8,13 +8,20 @@ const supabase = createClient(
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
 
-  const { userId, subscription } = req.body ?? {}
-  if (!userId || !subscription?.endpoint) return res.status(400).json({ error: 'Missing fields' })
+  const authHeader = req.headers.authorization
+  if (!authHeader?.startsWith('Bearer ')) return res.status(401).json({ error: 'Missing token' })
+
+  const token = authHeader.split(' ')[1]
+  const { data: { user }, error: userError } = await supabase.auth.getUser(token)
+  if (userError || !user) return res.status(401).json({ error: 'Invalid token' })
+
+  const { subscription } = req.body ?? {}
+  if (!subscription?.endpoint) return res.status(400).json({ error: 'Missing fields' })
 
   const { keys } = subscription
   const { error } = await supabase.from('push_subscriptions').upsert(
     {
-      user_id: userId,
+      user_id: user.id,
       endpoint: subscription.endpoint,
       p256dh: keys.p256dh,
       auth: keys.auth,

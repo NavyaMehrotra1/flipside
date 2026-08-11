@@ -10,7 +10,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.102.0",
     "@supabase/supabase-js": "^2.102.1",
     "@tailwindcss/vite": "^4.2.2",
     "@tiptap/extension-code-block-lowlight": "^3.22.3",

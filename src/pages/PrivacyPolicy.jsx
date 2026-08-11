@@ -18,7 +18,7 @@ export default function PrivacyPolicy() {
         </div>
 
         <h1 className="text-3xl font-extrabold mb-2 mt-6">Privacy Policy</h1>
-        <p className="opacity-50 text-sm mb-10">Last updated: June 19, 2026</p>
+        <p className="opacity-50 text-sm mb-10">Last updated: August 11, 2026</p>
 
         <div className="space-y-8 text-sm leading-7" style={{ color: 'var(--color-text)' }}>
 
@@ -32,7 +32,6 @@ export default function PrivacyPolicy() {
             <ul className="opacity-70 space-y-1 list-disc list-inside">
               <li>To provide the Flipside service: show your decks, schedule spaced-repetition reviews, track streaks.</li>
               <li>To send daily study reminder notifications (only if you opt in).</li>
-              <li>To generate flashcards via AI (the text you submit is sent to Anthropic's API; see Section 4).</li>
               <li>We do not sell your data, run ads, or share it with third parties for marketing.</li>
             </ul>
           </section>
@@ -43,17 +42,12 @@ export default function PrivacyPolicy() {
           </section>
 
           <section>
-            <h2 className="font-bold text-lg mb-2">4. AI card generation</h2>
-            <p className="opacity-70">When you use the AI card generator, the text you paste is sent to <strong>Anthropic's Claude API</strong> to produce flashcard suggestions. Anthropic processes this text to return a response. We do not store the raw text you paste beyond the duration of the API call. Please review <a href="https://www.anthropic.com/privacy" className="underline" target="_blank" rel="noopener noreferrer">Anthropic's Privacy Policy</a> for how they handle API inputs.</p>
-          </section>
-
-          <section>
-            <h2 className="font-bold text-lg mb-2">5. Cookies and local storage</h2>
+            <h2 className="font-bold text-lg mb-2">4. Cookies and local storage</h2>
             <p className="opacity-70">Flipside uses <strong>localStorage</strong> and a first-party <strong>cookie</strong> to persist your login session for up to 30 days. No third-party tracking cookies are used.</p>
           </section>
 
           <section>
-            <h2 className="font-bold text-lg mb-2">6. Your rights</h2>
+            <h2 className="font-bold text-lg mb-2">5. Your rights</h2>
             <ul className="opacity-70 space-y-1 list-disc list-inside">
               <li><strong>Access:</strong> You can view all your data inside the app at any time.</li>
               <li><strong>Deletion:</strong> You can permanently delete your account and all associated data from Settings → Danger Zone. Deletion is immediate and irreversible.</li>
@@ -62,17 +56,17 @@ export default function PrivacyPolicy() {
           </section>
 
           <section>
-            <h2 className="font-bold text-lg mb-2">7. Children</h2>
-            <p className="opacity-70">Flipside is not directed at children under 13. We do not knowingly collect personal information from children under 13.</p>
+            <h2 className="font-bold text-lg mb-2">6. Children</h2>
+            <p className="opacity-70">Flipside is not directed at children under 13, and we do not knowingly collect personal information from anyone under 13. Creating an account requires confirming you are at least 13 years old. If we learn that a user under 13 has provided us personal information, we will delete that account and data promptly. Parents or guardians who believe a child under 13 has created an account can contact us at <a href="mailto:nmehrot2@jh.edu" className="underline">nmehrot2@jh.edu</a> to request deletion.</p>
           </section>
 
           <section>
-            <h2 className="font-bold text-lg mb-2">8. Changes to this policy</h2>
+            <h2 className="font-bold text-lg mb-2">7. Changes to this policy</h2>
             <p className="opacity-70">We may update this policy as the service evolves. Material changes will be notified via email. Continued use after changes constitutes acceptance.</p>
           </section>
 
           <section>
-            <h2 className="font-bold text-lg mb-2">9. Contact</h2>
+            <h2 className="font-bold text-lg mb-2">8. Contact</h2>
             <p className="opacity-70">Questions? Email us at <a href="mailto:nmehrot2@jh.edu" className="underline">nmehrot2@jh.edu</a>.</p>
           </section>
         </div>
