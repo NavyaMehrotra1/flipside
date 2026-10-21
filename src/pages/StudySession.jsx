@@ -4,12 +4,14 @@ import { ArrowLeft, ArrowRight, HelpCircle } from 'lucide-react'
 import { useDeck } from '../hooks/useDecks'
 import { useCards } from '../hooks/useCards'
 import { useStudySession } from '../hooks/useStudySession'
+import { useAuth } from '../context/AuthContext'
 import CardFlip from '../components/CardFlip'
 import FloatingEmoji from '../components/FloatingEmoji'
 import KeyboardShortcutsModal from '../components/KeyboardShortcutsModal'
 import { fireConfetti } from '../components/ConfettiTrigger'
 import { useStreak } from '../hooks/useStreak'
 import { isMilestone, getMilestoneMessage } from '../lib/streaks'
+import { gradeMapForCards } from '../lib/cardGrades'
 import toast from 'react-hot-toast'
 
 const GRADE_BUTTONS = [
@@ -30,8 +32,63 @@ function shuffle(arr) {
 
 // ─── Mode selector ────────────────────────────────────────────────────────────
 function ModeSelector({ onSelect, cardCount }) {
+  const [pickingRatings, setPickingRatings] = useState(false)
+  const [selected, setSelected] = useState([0, 1])
+
+  const toggle = (value) => {
+    setSelected((prev) => (
+      prev.includes(value) ? prev.filter((item) => item !== value) : [...prev, value].sort()
+    ))
+  }
+
+  if (pickingRatings) {
+    return (
+      <div className="max-w-lg mx-auto px-4 py-8 safe-bottom">
+        <button
+          onClick={() => setPickingRatings(false)}
+          className="flex items-center gap-1 text-sm opacity-50 hover:opacity-100 mb-4 transition-opacity"
+        >
+          <ArrowLeft size={14} /> All modes
+        </button>
+        <h2 className="text-2xl font-extrabold mb-1">Which ratings?</h2>
+        <p className="opacity-60 mb-6 text-sm">
+          Nope means you didn’t understand it. Almost means it was shaky. Turn on any ratings you want to practice again.
+        </p>
+        <div className="grid grid-cols-2 gap-2 mb-4">
+          {GRADE_BUTTONS.map((btn) => {
+            const on = selected.includes(btn.value)
+            return (
+              <button
+                key={btn.value}
+                type="button"
+                aria-pressed={on}
+                onClick={() => toggle(btn.value)}
+                className="flex items-center gap-3 p-4 rounded-2xl text-left font-bold"
+                style={{
+                  background: on ? btn.bg : 'var(--color-surface)',
+                  border: `2px solid ${on ? btn.color : 'var(--color-border)'}`,
+                }}
+              >
+                <span className="text-2xl">{btn.emoji}</span>
+                <span>{btn.label}</span>
+              </button>
+            )
+          })}
+        </div>
+        <button
+          type="button"
+          disabled={!selected.length}
+          onClick={() => onSelect('missed', selected)}
+          className="btn-primary w-full justify-center disabled:opacity-40"
+        >
+          Review these cards
+        </button>
+      </div>
+    )
+  }
+
   return (
-    <div className="max-w-lg mx-auto px-4 py-8">
+    <div className="max-w-lg mx-auto px-4 py-8 safe-bottom">
       <h2 className="text-2xl font-extrabold mb-1">Choose study mode</h2>
       <p className="opacity-60 mb-6 text-sm">{cardCount} card{cardCount !== 1 ? 's' : ''} ready</p>
       <div className="space-y-3">
@@ -39,10 +96,11 @@ function ModeSelector({ onSelect, cardCount }) {
           { mode: 'sequential', emoji: '📋', label: 'Sequential', desc: 'Go through cards in order' },
           { mode: 'random',     emoji: '🎲', label: 'Shuffle',    desc: 'Mix it up for better retention' },
           { mode: 'spaced',     emoji: '🧠', label: 'Spaced Repetition', desc: 'SM-2: only cards due today' },
+          { mode: 'missed',     emoji: '🔁', label: "Didn't get it", desc: 'Only cards you marked Nope, Almost, or another rating' },
         ].map(m => (
           <button
             key={m.mode}
-            onClick={() => onSelect(m.mode)}
+            onClick={() => m.mode === 'missed' ? setPickingRatings(true) : onSelect(m.mode)}
             className="card-base card-hover w-full flex items-center gap-4 p-4 text-left"
             style={{ background: 'var(--color-surface)' }}
           >
@@ -101,7 +159,7 @@ function Stat({ value, label, color }) {
 }
 
 // ─── Active study session (mounts only after cards + mode are ready) ──────────
-function ActiveSession({ cards, mode, deckId, deck, onStudyAgain }) {
+function ActiveSession({ cards, mode, deckId, deck, onStudyAgain, emptyHint, focusLabel }) {
   const { recordStudy } = useStreak()
   const session = useStudySession(cards, deckId, mode)
 
@@ -167,17 +225,24 @@ function ActiveSession({ cards, mode, deckId, deck, onStudyAgain }) {
 
   if (!session.currentCard) {
     return (
-      <div className="max-w-md mx-auto px-4 py-16 text-center">
-        <div className="text-5xl mb-4">📭</div>
-        <h2 className="text-xl font-bold mb-2">No cards to study!</h2>
-        <p className="opacity-60 text-sm mb-6">Add some cards to this deck first.</p>
-        <Link to={`/deck/${deckId}`} className="btn-primary">Go to deck</Link>
+      <div className="max-w-md mx-auto px-4 py-16 text-center safe-bottom">
+        <div className="text-5xl mb-4">{emptyHint ? '🎯' : '📭'}</div>
+        <h2 className="text-xl font-bold mb-2">{emptyHint ? 'No cards with those ratings' : 'No cards to study!'}</h2>
+        <p className="opacity-60 text-sm mb-6">
+          {emptyHint || 'Add some cards to this deck first.'}
+        </p>
+        <div className="flex gap-3 justify-center">
+          {emptyHint && (
+            <button onClick={onStudyAgain} className="btn-primary">Choose ratings</button>
+          )}
+          <Link to={`/deck/${deckId}`} className="btn-secondary">Go to deck</Link>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
+    <div className="max-w-2xl mx-auto px-4 py-8 safe-bottom">
       {/* Top bar */}
       <div className="flex items-center justify-between mb-6">
         <Link to={`/deck/${deckId}`} className="flex items-center gap-1 text-sm opacity-50 hover:opacity-100 transition-opacity">
@@ -185,7 +250,7 @@ function ActiveSession({ cards, mode, deckId, deck, onStudyAgain }) {
         </Link>
         <div className="flex items-center gap-2">
           <span className="text-sm font-bold opacity-40">
-            Card {session.currentIndex + 1} of {session.totalCards} ✨
+            {focusLabel ? `${focusLabel} · ` : ''}Card {session.currentIndex + 1} of {session.totalCards} ✨
           </span>
           <button
             onClick={() => setShortcutsOpen(true)}
@@ -213,7 +278,7 @@ function ActiveSession({ cards, mode, deckId, deck, onStudyAgain }) {
 
       {/* Grade buttons */}
       {session.flipped && (
-        <div className="mt-6 grid grid-cols-4 gap-2">
+        <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-2">
           {GRADE_BUTTONS.map(btn => (
             <button
               key={btn.value}
@@ -253,15 +318,40 @@ function ActiveSession({ cards, mode, deckId, deck, onStudyAgain }) {
 // ─── Outer shell ──────────────────────────────────────────────────────────────
 export default function StudySession() {
   const { id } = useParams()
+  const { user } = useAuth()
   const { deck } = useDeck(id)
   const { cards, loading } = useCards(id)
 
   const [mode, setMode] = useState(null)
   const [orderedCards, setOrderedCards] = useState(null)
   const [sessionKey, setSessionKey] = useState(0)
+  const [preparing, setPreparing] = useState(false)
+  const [emptyHint, setEmptyHint] = useState(null)
+  const [focusLabel, setFocusLabel] = useState(null)
 
-  const handleModeSelect = (selectedMode) => {
-    const arranged = selectedMode === 'random' ? shuffle(cards) : [...cards]
+  const handleModeSelect = async (selectedMode, ratings) => {
+    setEmptyHint(null)
+    setFocusLabel(null)
+    let pool = cards
+
+    if (selectedMode === 'missed') {
+      setPreparing(true)
+      try {
+        const map = await gradeMapForCards(user.id, cards.map((card) => card.id))
+        pool = cards.filter((card) => ratings.includes(map[card.id]?.grade))
+        setFocusLabel(GRADE_BUTTONS.filter((btn) => ratings.includes(btn.value)).map((btn) => btn.label).join(', '))
+        if (!pool.length) {
+          setEmptyHint('Study this deck and tap Nope or Almost on anything you didn’t understand. Those cards show up here, and you can include any other rating too.')
+        }
+      } catch {
+        toast.error('Could not load your ratings.')
+        setPreparing(false)
+        return
+      }
+      setPreparing(false)
+    }
+
+    const arranged = selectedMode === 'random' ? shuffle(pool) : [...pool]
     setOrderedCards(arranged)
     setMode(selectedMode)
   }
@@ -269,14 +359,16 @@ export default function StudySession() {
   const handleStudyAgain = () => {
     setMode(null)
     setOrderedCards(null)
+    setEmptyHint(null)
+    setFocusLabel(null)
     setSessionKey(k => k + 1)
   }
 
-  if (loading) {
+  if (loading || preparing) {
     return (
       <div className="max-w-md mx-auto px-4 py-16 text-center">
         <div className="text-4xl mb-4 opacity-40">🃏</div>
-        <p className="opacity-50 text-sm">Loading cards...</p>
+        <p className="opacity-50 text-sm">{preparing ? 'Finding cards with those ratings...' : 'Loading cards...'}</p>
       </div>
     )
   }
@@ -294,6 +386,8 @@ export default function StudySession() {
       deckId={id}
       deck={deck}
       onStudyAgain={handleStudyAgain}
+      emptyHint={emptyHint}
+      focusLabel={focusLabel}
     />
   )
 }

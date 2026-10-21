@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom'
+import { useEffect } from 'react'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import Navbar from './components/Navbar'
@@ -13,7 +14,27 @@ import ResetPassword from './pages/ResetPassword'
 import PrivacyPolicy from './pages/PrivacyPolicy'
 import TermsOfService from './pages/TermsOfService'
 import LandingPage from './pages/LandingPage'
+import { flushOutbox, downloadLibrary } from './lib/offlineSync'
+import { isOffline } from './lib/offlineStore'
 import './styles/globals.css'
+
+function OfflineSync() {
+  const { user } = useAuth()
+  useEffect(() => {
+    if (!user) return
+    const run = async () => {
+      if (isOffline()) return
+      await flushOutbox(user.id)
+      try {
+        await downloadLibrary(user.id)
+      } catch { /* keep the last saved copy */ }
+    }
+    run()
+    window.addEventListener('online', run)
+    return () => window.removeEventListener('online', run)
+  }, [user])
+  return null
+}
 
 function RootRoute() {
   const { user, loading } = useAuth()
@@ -57,6 +78,7 @@ function PublicRoute() {
 export default function App() {
   return (
     <AuthProvider>
+      <OfflineSync />
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<RootRoute />} />

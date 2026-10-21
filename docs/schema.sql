@@ -39,6 +39,7 @@ create table if not exists reviews (
   repetitions  integer default 0,
   due_date     timestamptz default now(),
   last_reviewed timestamptz,
+  last_grade   smallint,
   unique(card_id, user_id)
 );
 
@@ -204,3 +205,7 @@ create policy "group_members: can join"
 create policy "group_members: can leave"
   on group_members for delete
   using (auth.uid() = user_id);
+
+
+-- ── 5. CARD RATINGS (safe to re-run on an existing project) ─
+alter table reviews add column if not exists last_grade smallint;

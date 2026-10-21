@@ -3,6 +3,9 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { sm2 } from '../lib/sm2'
 import { updateStreak } from '../lib/streaks'
+import { rememberGrade } from '../lib/cardGrades'
+import { enqueue, isOffline, upsertCachedReview } from '../lib/offlineStore'
+import { isNetworkFailure, readReview, saveReview } from '../lib/reviews'
 
 function shuffle(arr) {
   const a = [...arr]
@@ -63,19 +66,29 @@ export function useStudySession(cards, deckId, mode = 'sequential') {
   const flip = () => setFlipped(f => !f)
 
   const grade = async (gradeValue) => {
-    if (!currentCard) return
+    if (!currentCard || !user) return
     setLastGrade(gradeValue)
     setGrades(prev => ({ ...prev, [currentCard.id]: gradeValue }))
+    rememberGrade(user.id, currentCard.id, gradeValue)
 
-    const { data: review } = await supabase
-      .from('reviews').select('*')
-      .eq('card_id', currentCard.id).eq('user_id', user.id).single()
-
+    const review = await readReview(user.id, currentCard.id)
     const sm2Result = sm2(review || {}, gradeValue)
-    await supabase.from('reviews').upsert(
-      { user_id: user.id, card_id: currentCard.id, ...sm2Result },
-      { onConflict: 'card_id,user_id' }
-    )
+    const row = { user_id: user.id, card_id: currentCard.id, ...sm2Result, last_grade: gradeValue }
+
+    const keepLocal = async () => {
+      try {
+        await enqueue({ userId: user.id, kind: 'review', row })
+        await upsertCachedReview(user.id, row)
+      } catch { /* study can continue; the grade is still stored on this device */ }
+    }
+
+    if (isOffline()) {
+      await keepLocal()
+    } else {
+      const { error } = await saveReview(row)
+      if (error && isNetworkFailure(error)) await keepLocal()
+      else if (!error) upsertCachedReview(user.id, row).catch(() => {})
+    }
 
     setTimeout(() => {
       setFlipped(false)
@@ -96,18 +109,20 @@ export function useStudySession(cards, deckId, mode = 'sequential') {
     const total    = Object.values(allGrades).length
     const accuracy = total > 0 ? correct / total : 0
 
-    if (sessionId) {
-      await supabase.from('sessions').update({
-        ended_at: new Date().toISOString(),
-        cards_reviewed: total,
-        accuracy,
-      }).eq('id', sessionId)
-    }
-
-    // Clear saved position when session finishes
-    try { sessionStorage.removeItem(sessionKey(deckId, mode)) } catch {}
-    await updateStreak(user.id)
+    try { sessionStorage.removeItem(sessionKey(deckId, mode)) } catch { /* storage can be blocked */ }
     setEnded(true)
+
+    if (isOffline()) return
+    try {
+      if (sessionId) {
+        await supabase.from('sessions').update({
+          ended_at: new Date().toISOString(),
+          cards_reviewed: total,
+          accuracy,
+        }).eq('id', sessionId)
+      }
+      await updateStreak(user.id)
+    } catch { /* the session still ends if the network drops */ }
   }
 
   const prev = () => {

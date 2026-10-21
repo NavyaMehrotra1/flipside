@@ -29,7 +29,7 @@ export default function CardFlip({ front, back, flipped, onFlip, frontBg, backBg
   const cardHeight = (frontHasImage || backHasImage) ? '480px' : '360px'
 
   return (
-    <div className="w-full" style={{ height: cardHeight }}>
+    <div className="w-full study-card-frame" style={{ height: cardHeight }}>
       <div className="flip-card-container w-full h-full" onClick={handleFlip}>
         <div className={`flip-card-inner w-full h-full ${flipped ? 'flipped' : ''}`}>
           {/* Front */}

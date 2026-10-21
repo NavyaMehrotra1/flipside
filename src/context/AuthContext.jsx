@@ -1,26 +1,59 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 
+function readStoredSession() {
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i)
+      if (!key || !key.startsWith('sb-') || !key.endsWith('-auth-token')) continue
+      const parsed = JSON.parse(localStorage.getItem(key) || 'null')
+      if (parsed?.user) return parsed
+      if (parsed?.currentSession?.user) return parsed.currentSession
+    }
+  } catch { /* stay signed out until a stored session exists */ }
+  return null
+}
+
 const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null)
-  const [session, setSession] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [user, setUser] = useState(() => readStoredSession()?.user ?? null)
+  const [session, setSession] = useState(() => {
+    const stored = readStoredSession()
+    return stored?.user ? stored : null
+  })
+  const [loading, setLoading] = useState(() => !readStoredSession()?.user)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    let active = true
+    const slow = setTimeout(() => {
+      if (active) setLoading(false)
+    }, 3000)
+
+    supabase.auth.getSession().then(({ data: { session: next } }) => {
+      if (!active) return
+      clearTimeout(slow)
+      if (!next && readStoredSession()?.user) {
+        setLoading(false)
+        return
+      }
+      setSession(next)
+      setUser(next?.user ?? null)
+      setLoading(false)
+    })
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!session && event === 'SIGNED_OUT' && readStoredSession()?.user) return
       setSession(session)
       setUser(session?.user ?? null)
       setLoading(false)
     })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
-      setUser(session?.user ?? null)
-    })
-
-    return () => subscription.unsubscribe()
+    return () => {
+      active = false
+      clearTimeout(slow)
+      subscription.unsubscribe()
+    }
   }, [])
 
   const signUp = async (email, password, name) => {

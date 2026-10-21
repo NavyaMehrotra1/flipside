@@ -17,7 +17,7 @@ export default function DeckView() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { deck, loading: deckLoading } = useDeck(id)
-  const { cards, loading: cardsLoading, createCard, updateCard, deleteCard, toggleBookmark, bulkImport } = useCards(id)
+  const { cards, loading: cardsLoading, error: cardsError, createCard, updateCard, deleteCard, toggleBookmark, bulkImport } = useCards(id)
 
   const [view, setView] = useState('grid')
   const [search, setSearch] = useState('')
@@ -230,9 +230,14 @@ export default function DeckView() {
         <div className="card-base py-16 text-center" style={{ background: 'var(--color-surface)' }}>
           <div className="text-4xl mb-3">{cards.length === 0 ? '✨' : '🔍'}</div>
           <h3 className="font-bold mb-2">
-            {cards.length === 0 ? 'No cards yet — let\'s fix that! ✨' : 'No cards match your search'}
+            {cards.length === 0
+              ? (cardsError === 'offline' ? 'No offline copy of this deck' : 'No cards yet — let\'s fix that! ✨')
+              : 'No cards match your search'}
           </h3>
-          {cards.length === 0 && (
+          {cards.length === 0 && cardsError === 'offline' && (
+            <Link to="/settings#offline" className="btn-primary mt-2 text-sm">Set up offline mode</Link>
+          )}
+          {cards.length === 0 && cardsError !== 'offline' && (
             <button onClick={() => setShowAddModal(true)} className="btn-primary mt-2 text-sm">
               <Plus size={14} /> Add your first card
             </button>

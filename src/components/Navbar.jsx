@@ -1,8 +1,9 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useStreak } from '../hooks/useStreak'
-import { Moon, Sun, Settings, LogOut, Lock } from 'lucide-react'
+import { Moon, Sun, Settings, LogOut, Lock, WifiOff } from 'lucide-react'
 import { useState, useEffect } from 'react'
+import { isOffline, onConnectivity } from '../lib/offlineStore'
 
 export default function Navbar() {
   const { user, firstName, signOut } = useAuth()
@@ -10,11 +11,14 @@ export default function Navbar() {
   const navigate = useNavigate()
   const [dark, setDark] = useState(() => localStorage.getItem('theme') === 'dark')
   const [menuOpen, setMenuOpen] = useState(false)
+  const [online, setOnline] = useState(() => !isOffline())
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', dark)
     localStorage.setItem('theme', dark ? 'dark' : 'light')
   }, [dark])
+
+  useEffect(() => onConnectivity((offline) => setOnline(!offline)), [])
 
   const handleSignOut = async () => {
     await signOut()
@@ -23,7 +27,7 @@ export default function Navbar() {
 
   return (
     <nav
-      className="sticky top-0 z-50 border-b"
+      className="app-nav sticky top-0 z-50 border-b"
       style={{
         background: 'rgba(253,248,243,0.85)',
         backdropFilter: 'blur(16px)',
@@ -56,6 +60,16 @@ export default function Navbar() {
             </Link>
           )}
 
+          {!online && (
+            <Link
+              to="/settings#offline"
+              className="flex items-center gap-1 px-2.5 py-1 rounded-full text-sm font-bold no-underline"
+              style={{ background: 'rgba(234,88,12,0.12)', color: '#ea580c' }}
+            >
+              <WifiOff size={14} /> Offline
+            </Link>
+          )}
+
           {/* Dark mode */}
           <button
             onClick={() => setDark(d => !d)}
@@ -84,6 +98,14 @@ export default function Navbar() {
                     style={{ background: 'var(--color-surface)' }}
                   >
                     <div className="px-3 py-1.5 text-xs opacity-50 font-semibold">{firstName}</div>
+                    <Link
+                      to="/settings#offline"
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-black/5 no-underline"
+                      style={{ color: 'var(--color-text)' }}
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      <WifiOff size={14} /> Offline mode
+                    </Link>
                     <Link
                       to="/settings"
                       className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-black/5 no-underline"

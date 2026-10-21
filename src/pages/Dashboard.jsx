@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Plus, BookOpen } from 'lucide-react'
+import { Plus, BookOpen, WifiOff } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useDecks } from '../hooks/useDecks'
 import { useStreak } from '../hooks/useStreak'
@@ -23,7 +23,7 @@ const HEADERS = [
 
 export default function Dashboard() {
   const { firstName } = useAuth()
-  const { decks, loading, deleteDeck, updateDeck } = useDecks()
+  const { decks, loading, error, deleteDeck, updateDeck } = useDecks()
   const { streak, streakBroken } = useStreak()
   const [header] = useState(() => HEADERS[Math.floor(Math.random() * HEADERS.length)])
   const [mode, setMode] = useState('focus')
@@ -75,7 +75,7 @@ export default function Dashboard() {
             <h1 className="text-3xl font-extrabold">Welcome back, {firstName}! 👋</h1>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             {/* Mode toggle */}
             <div className="flex p-1 gap-1 rounded-2xl" style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
               {[
@@ -96,10 +96,16 @@ export default function Dashboard() {
             </div>
 
             {mode === 'focus' && (
-              <Link to="/new-deck" className="btn-primary">
-                <Plus size={16} />
-                New Deck
-              </Link>
+              <>
+                <Link to="/settings#offline" className="btn-secondary">
+                  <WifiOff size={16} />
+                  Offline
+                </Link>
+                <Link to="/new-deck" className="btn-primary">
+                  <Plus size={16} />
+                  New Deck
+                </Link>
+              </>
             )}
           </div>
         </div>
@@ -141,6 +147,25 @@ export default function Dashboard() {
 
           {loading ? (
             <SkeletonGrid count={6} />
+          ) : error && decks.length === 0 ? (
+            <div className="card-base flex flex-col items-center justify-center py-16 text-center px-6"
+              style={{ background: 'var(--color-surface)' }}>
+              <div className="text-5xl mb-4">{error === 'offline' ? '📶' : '😕'}</div>
+              <h3 className="font-bold text-xl mb-2">
+                {error === 'offline' ? 'No offline copy on this device' : 'Could not load your decks'}
+              </h3>
+              <p className="opacity-60 mb-6 text-sm max-w-md">
+                {error === 'offline'
+                  ? 'Connect once, then save your decks. After that you can study on your iPhone or iPad with no signal.'
+                  : 'Check your connection and try again.'}
+              </p>
+              {error === 'offline' && (
+                <Link to="/settings#offline" className="btn-primary">
+                  <WifiOff size={16} />
+                  Set up offline mode
+                </Link>
+              )}
+            </div>
           ) : decks.length === 0 ? (
             <div className="card-base flex flex-col items-center justify-center py-16 text-center"
               style={{ background: 'var(--color-surface)' }}>

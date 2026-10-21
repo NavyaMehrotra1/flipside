@@ -1,21 +1,19 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { User, Lock, Trash2, ArrowLeft } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { supabase } from '../lib/supabase'
+import OfflinePanel from '../components/OfflinePanel'
 
 export default function Settings() {
   const { user, displayName, updateProfile, signOut } = useAuth()
   const navigate = useNavigate()
 
-  const passwordRef = useRef(null)
-
-  // Scroll to password section if navigated with #password hash
   useEffect(() => {
-    if (window.location.hash === '#password') {
-      setTimeout(() => passwordRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100)
-    }
+    const id = window.location.hash.replace('#', '')
+    if (!id) return
+    setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100)
   }, [])
 
   const [name, setName] = useState(displayName)
@@ -103,8 +101,10 @@ export default function Settings() {
         </form>
       </section>
 
+      <OfflinePanel />
+
       {/* Password */}
-      <section ref={passwordRef} className="card-base p-6 mb-4" style={{ background: 'var(--color-surface)' }}>
+      <section id="password" className="card-base p-6 mb-4" style={{ background: 'var(--color-surface)' }}>
         <h2 className="font-bold text-lg mb-4 flex items-center gap-2"><Lock size={16} /> Change Password</h2>
         <form onSubmit={handleUpdatePassword} className="space-y-4">
           <div>

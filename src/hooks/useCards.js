@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
+import { isOffline, loadLibrary, rememberDeckCards } from '../lib/offlineStore'
 
 export function useCards(deckId) {
   const { user } = useAuth()
@@ -8,24 +9,62 @@ export function useCards(deckId) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
+  const mirrorCards = (next) => {
+    if (user && deckId) rememberDeckCards(user.id, deckId, next).catch(() => {})
+  }
+
   const fetchCards = useCallback(async () => {
     if (!user || !deckId) return
-    setLoading(true)
-    const { data, error } = await supabase
-      .from('cards')
-      .select('*')
-      .eq('deck_id', deckId)
-      .eq('user_id', user.id)
-      .order('position', { ascending: true, nullsLast: true })
-      .order('created_at', { ascending: true })
+    const lib = await loadLibrary(user.id)
+    const cached = (lib?.cards || []).filter((card) => card.deck_id === deckId)
+    if (lib) {
+      setCards(cached)
+      setError(null)
+      setLoading(false)
+    } else {
+      setLoading(true)
+    }
 
-    if (error) setError(error.message)
-    else setCards(data || [])
+    if (isOffline()) {
+      if (!lib) {
+        setCards([])
+        setError('offline')
+      }
+      setLoading(false)
+      return
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('cards')
+        .select('*')
+        .eq('deck_id', deckId)
+        .eq('user_id', user.id)
+        .order('position', { ascending: true, nullsLast: true })
+        .order('created_at', { ascending: true })
+
+      if (error) throw error
+      const next = data || []
+      setCards(next)
+      setError(null)
+      rememberDeckCards(user.id, deckId, next).catch(() => {})
+    } catch {
+      if (!lib) {
+        setCards([])
+        setError(isOffline() ? 'offline' : 'Could not load cards.')
+      }
+    }
     setLoading(false)
   }, [user, deckId])
 
   useEffect(() => {
     fetchCards()
+  }, [fetchCards])
+
+  useEffect(() => {
+    const onOnline = () => fetchCards()
+    window.addEventListener('online', onOnline)
+    return () => window.removeEventListener('online', onOnline)
   }, [fetchCards])
 
   const createCard = async ({ front, back, tags = [], bookmarked = false }) => {
@@ -45,7 +84,9 @@ export function useCards(deckId) {
       .single()
 
     if (!error && data) {
-      setCards(prev => [...prev, data])
+      const next = [...cards, data]
+      setCards(next)
+      mirrorCards(next)
     }
     return { data, error }
   }
@@ -60,7 +101,9 @@ export function useCards(deckId) {
       .single()
 
     if (!error && data) {
-      setCards(prev => prev.map(c => c.id === id ? data : c))
+      const next = cards.map(c => c.id === id ? data : c)
+      setCards(next)
+      mirrorCards(next)
     }
     return { data, error }
   }
@@ -73,7 +116,9 @@ export function useCards(deckId) {
       .eq('user_id', user.id)
 
     if (!error) {
-      setCards(prev => prev.filter(c => c.id !== id))
+      const next = cards.filter(c => c.id !== id)
+      setCards(next)
+      mirrorCards(next)
     }
     return { error }
   }
@@ -102,7 +147,9 @@ export function useCards(deckId) {
       .select()
 
     if (!error && data) {
-      setCards(prev => [...prev, ...data])
+      const next = [...cards, ...data]
+      setCards(next)
+      mirrorCards(next)
     }
     return { data, error }
   }
