@@ -281,6 +281,21 @@
   outline-offset: 2px;
 }
 
+.card-content {
+  text-align: left;
+}
+.card-content p {
+  margin: 0.35rem 0;
+}
+.card-content ol,
+.card-content ul {
+  margin: 0.4rem 0;
+  padding-left: 1.2rem;
+}
+.card-content li {
+  margin: 0.2rem 0;
+}
+
 /* Images inside card flip display */
 .card-content img {
   max-width: 100%;

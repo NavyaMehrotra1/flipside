@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { isOffline, loadLibrary, rememberDecks } from '../lib/offlineStore'
+import { ensureMicroDeck } from '../lib/seedMicroDeck'
 
 const PASTEL_COLORS = [
   '#FFE8DC', '#EDE9FE', '#DCFCE7', '#FEFCE8',
@@ -43,6 +44,7 @@ export function useDecks() {
     }
 
     try {
+      await ensureMicroDeck(user.id)
       const { data, error } = await supabase
         .from('decks')
         .select('*')
